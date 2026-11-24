@@ -1,18 +1,20 @@
 {
   "expo": {
-    "name": "Tablly Restaurant",
-    "slug": "tablly-restaurant",
+    "name": "Tablly Restaurant Ops",
+    "slug": "tablly-restaurant-ops",
     "scheme": "tablly",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tablly.restaurantops"
     },
     "android": {
+      "package": "com.tablly.restaurantops",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#D9480F",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
