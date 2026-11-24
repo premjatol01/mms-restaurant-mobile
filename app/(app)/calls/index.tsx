@@ -1,30 +1,36 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { useWaiterCallsStore, ServiceCall } from '../../../src/store/waiterCallsStore';
+import { usePermissions } from '../../../src/hooks/usePermissions';
 import { Colors } from '../../../src/constants/theme';
-import { Bell, Droplets, Receipt, UserCheck, Check } from 'lucide-react-native';
-
-interface WaiterCall {
-  id: string;
-  tableNo: string;
-  type: 'water' | 'bill' | 'steward';
-  label: string;
-  timeElapsed: string;
-}
-
-const INITIAL_CALLS: WaiterCall[] = [
-  { id: 'c1', tableNo: 'Table 4', type: 'water', label: 'Drinking Water requested', timeElapsed: '2m ago' },
-  { id: 'c2', tableNo: 'Table 7', type: 'bill', label: 'Requested final bill & settlement', timeElapsed: '5m ago' },
-  { id: 'c3', tableNo: 'Table 2', type: 'steward', label: 'Captain assistance needed', timeElapsed: '8m ago' },
-];
+import {
+  Bell,
+  Droplets,
+  Receipt,
+  UserCheck,
+  Check,
+  Sparkles,
+  Clock,
+  HelpCircle,
+} from 'lucide-react-native';
 
 export default function CallsScreen() {
-  const [calls, setCalls] = useState<WaiterCall[]>(INITIAL_CALLS);
+  const { calls, filterType, setFilterType, dismissCall, simulateGuestCall, loadCalls } =
+    useWaiterCallsStore();
+  const { hasPermission } = usePermissions();
 
-  const dismissCall = (id: string) => {
-    setCalls((prev) => prev.filter((c) => c.id !== id));
-  };
+  const canHandleCalls = hasPermission('waiter_handler');
 
-  const getCallIcon = (type: WaiterCall['type']) => {
+  useEffect(() => {
+    loadCalls();
+  }, []);
+
+  const filteredCalls = calls.filter((c) => {
+    if (filterType === 'all') return true;
+    return c.type === filterType;
+  });
+
+  const getCallIcon = (type: ServiceCall['type']) => {
     switch (type) {
       case 'water':
         return <Droplets size={20} color={Colors.blue} />;
@@ -35,17 +41,69 @@ export default function CallsScreen() {
     }
   };
 
+  const getElapsedTimeText = (createdAt: number) => {
+    const elapsedMinutes = Math.floor((Date.now() - createdAt) / 60000);
+    if (elapsedMinutes < 1) return 'Just now';
+    return `${elapsedMinutes}m ago`;
+  };
+
   return (
     <View style={styles.container}>
+      {/* Simulation Banner */}
+      <View style={styles.simBanner}>
+        <TouchableOpacity
+          style={styles.simButton}
+          onPress={simulateGuestCall}
+          activeOpacity={0.8}
+        >
+          <Sparkles size={14} color="#FFFFFF" />
+          <Text style={styles.simButtonText}>
+            ⚡ Simulate Diner Service Call (Test Waiter Alert)
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Filter Tabs */}
+      <View style={styles.filterBar}>
+        {(['all', 'water', 'bill', 'steward'] as const).map((ft) => {
+          const count = ft === 'all' ? calls.length : calls.filter((c) => c.type === ft).length;
+          const isActive = filterType === ft;
+          const label =
+            ft === 'all'
+              ? 'All Calls'
+              : ft === 'water'
+              ? 'Water'
+              : ft === 'bill'
+              ? 'Bill Requests'
+              : 'Captain';
+
+          return (
+            <TouchableOpacity
+              key={ft}
+              style={[styles.filterTab, isActive && styles.filterTabActive]}
+              onPress={() => setFilterType(ft)}
+            >
+              <Text style={[styles.filterTabText, isActive && styles.filterTabTextActive]}>
+                {label} ({count})
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* Calls List */}
       <FlatList
-        data={calls}
+        data={filteredCalls}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Bell size={44} color={Colors.textMuted} />
-            <Text style={styles.emptyTitle}>No Pending Service Calls</Text>
-            <Text style={styles.emptySubtitle}>All guest table calls have been attended to.</Text>
+            <Text style={styles.emptyTitle}>No Pending Table Calls</Text>
+            <Text style={styles.emptySubtitle}>
+              All guest table service requests have been completed.
+            </Text>
           </View>
         }
         renderItem={({ item }) => (
@@ -55,18 +113,25 @@ export default function CallsScreen() {
             <View style={{ flex: 1 }}>
               <View style={styles.callHeader}>
                 <Text style={styles.tableText}>{item.tableNo}</Text>
-                <Text style={styles.timeText}>{item.timeElapsed}</Text>
+                <View style={styles.timeRow}>
+                  <Clock size={11} color={Colors.textSecondary} />
+                  <Text style={styles.timeText}>{getElapsedTimeText(item.createdAt)}</Text>
+                </View>
               </View>
-              <Text style={styles.callDesc}>{item.label}</Text>
+
+              <Text style={styles.callLabel}>{item.label}</Text>
+              {item.detail && <Text style={styles.callDetail}>{item.detail}</Text>}
             </View>
 
-            <TouchableOpacity
-              style={styles.doneButton}
-              onPress={() => dismissCall(item.id)}
-              activeOpacity={0.7}
-            >
-              <Check size={16} color="#FFFFFF" />
-            </TouchableOpacity>
+            {canHandleCalls && (
+              <TouchableOpacity
+                style={styles.doneButton}
+                onPress={() => dismissCall(item.id)}
+                activeOpacity={0.7}
+              >
+                <Check size={16} color="#FFFFFF" strokeWidth={2.5} />
+              </TouchableOpacity>
+            )}
           </View>
         )}
       />
@@ -79,6 +144,57 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  simBanner: {
+    padding: 14,
+    backgroundColor: Colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  simButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: Colors.primary,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  simButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  filterBar: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: Colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    gap: 8,
+  },
+  filterTab: {
+    flex: 1,
+    paddingVertical: 6,
+    alignItems: 'center',
+    borderRadius: 14,
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  filterTabActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  filterTabText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  filterTabTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
   listContent: {
     padding: 16,
     gap: 12,
@@ -87,16 +203,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.card,
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 16,
+    padding: 16,
     borderWidth: 1,
     borderColor: Colors.border,
     gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 2,
   },
   callIconBox: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: Colors.cardMuted,
     justifyContent: 'center',
     alignItems: 'center',
@@ -107,23 +228,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tableText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '800',
     color: Colors.text,
+  },
+  timeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   timeText: {
     fontSize: 11,
     color: Colors.textSecondary,
   },
-  callDesc: {
+  callLabel: {
     fontSize: 13,
+    fontWeight: '700',
+    color: Colors.text,
+    marginTop: 2,
+  },
+  callDetail: {
+    fontSize: 12,
     color: Colors.textSecondary,
     marginTop: 2,
   },
   doneButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: Colors.emerald,
     justifyContent: 'center',
     alignItems: 'center',
