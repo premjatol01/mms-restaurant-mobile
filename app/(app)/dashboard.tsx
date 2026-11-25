@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
 import { Colors } from '../../src/constants/theme';
 import { fetchDashboardAnalytics, DashboardMetrics } from '../../src/services/api/dashboardApi';
+import { useAuthStore } from '../../src/store/authStore';
 import { TrendingUp, ShoppingBag, Users, Clock, Store, RefreshCw, Star } from 'lucide-react-native';
 
 const FALLBACK_KPI: DashboardMetrics = {
@@ -21,6 +22,7 @@ const FALLBACK_KPI: DashboardMetrics = {
 };
 
 export default function DashboardScreen() {
+  const { user } = useAuthStore();
   const [kpi, setKpi] = useState<DashboardMetrics>(FALLBACK_KPI);
   const [topDishes, setTopDishes] = useState<any[]>([
     { name: 'Paneer Butter Masala', quantity: 32, revenue: 10240 },
@@ -77,8 +79,8 @@ export default function DashboardScreen() {
         <View style={styles.restaurantInfo}>
           <Store size={20} color={Colors.primary} />
           <View>
-            <Text style={styles.restaurantName}>Tablly Grand Bistro</Text>
-            <Text style={styles.restaurantSubtitle}>Branch #1 • Live Station</Text>
+            <Text style={styles.restaurantName}>{user?.restaurantName || 'Tablly Restaurant'}</Text>
+            <Text style={styles.restaurantSubtitle}>{user?.roleName || 'Restaurant Admin'} • Live Station</Text>
           </View>
         </View>
 

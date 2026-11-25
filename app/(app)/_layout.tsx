@@ -44,7 +44,6 @@ export default function AppLayout() {
       <SidebarDrawer />
 
       <Tabs
-        initialRouteName="dashboard"
         screenOptions={{
           headerShown: true,
           headerStyle: {

@@ -70,6 +70,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const { user: rawUser, token } = response.data.data;
         
         const matchedRole = PRESET_ROLES.find(r => r.id === rawUser.role) || PRESET_ROLES[0];
+        
+        let restaurantName = rawUser.restaurantName || 'My Restaurant';
+        try {
+          const profRes = await apiClient.get('/restaurant/profile', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (profRes.data?.success && profRes.data.data?.name) {
+            restaurantName = profRes.data.data.name;
+          }
+        } catch {}
+
         const user: UserProfile = {
           _id: rawUser._id,
           name: rawUser.name,
@@ -78,7 +89,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           roleName: matchedRole.name,
           permissions: rawUser.permissions || matchedRole.permissions,
           restaurantId: rawUser.restaurantId,
-          restaurantName: 'Tablly Grand Bistro',
+          restaurantName,
         };
 
         try {

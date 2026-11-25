@@ -165,8 +165,8 @@ export function SidebarDrawer() {
                 <Store size={20} color="#FFFFFF" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.brandTitle}>Tablly</Text>
-                <Text style={styles.brandSubtitle}>Grand Bistro • Branch #1</Text>
+                <Text style={styles.brandTitle}>{user?.restaurantName || 'Tablly'}</Text>
+                <Text style={styles.brandSubtitle}>{user?.roleName || 'Restaurant Admin'} • Live</Text>
               </View>
               <TouchableOpacity style={styles.closeBtn} onPress={closeSidebar}>
                 <X size={20} color={Colors.textSecondary} />

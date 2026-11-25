@@ -846,6 +846,34 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
   },
+  modalSubtitle: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  modalCloseBtn: {
+    padding: 8,
+  },
+  formSection: {
+    marginBottom: 16,
+  },
+  formSectionTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+  },
+  inputGroup: {
+    marginBottom: 10,
+  },
+  permItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
