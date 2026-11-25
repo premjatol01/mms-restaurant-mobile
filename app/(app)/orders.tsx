@@ -38,7 +38,6 @@ export default function OrdersScreen() {
     kitchenDisplayMode,
     toggleKitchenDisplayMode,
     advanceStatus,
-    simulateIncomingOrder,
     loadOrders,
   } = useOrdersStore();
 
@@ -158,18 +157,6 @@ export default function OrdersScreen() {
             {isDark ? <Sun size={16} color="#FBBF24" /> : <Moon size={16} color={Colors.textSecondary} />}
           </TouchableOpacity>
         </View>
-      </View>
-
-      {/* Simulation Banner */}
-      <View style={styles.simulationBanner}>
-        <TouchableOpacity
-          style={styles.simButton}
-          onPress={simulateIncomingOrder}
-          activeOpacity={0.8}
-        >
-          <Sparkles size={14} color="#FFFFFF" />
-          <Text style={styles.simButtonText}>⚡ Simulate New Customer Order (Test Real-Time Alert)</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Filter Tabs */}

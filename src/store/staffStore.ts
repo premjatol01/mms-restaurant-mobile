@@ -19,74 +19,7 @@ export interface MobileStaffMember {
 
 const STORAGE_KEY = 'tablly_mobile_staff_v1';
 
-export const INITIAL_STAFF_MEMBERS: MobileStaffMember[] = [
-  {
-    id: 'staff-1',
-    name: 'Karan Sharma',
-    email: 'karan@tablly.com',
-    phone: '+91 98765 43210',
-    roleId: 'admin',
-    roleName: 'Restaurant Admin',
-    roleColor: '#D9480F',
-    status: 'active',
-    permissions: PRESET_ROLES[0].permissions,
-    invitedAt: '2026-10-01T10:00:00.000Z',
-    lastLoginAt: '2026-11-24T20:30:00.000Z',
-    isOwner: true,
-  },
-  {
-    id: 'staff-2',
-    name: 'Rajesh Kumar',
-    email: 'rajesh.chef@tablly.com',
-    phone: '+91 98111 22334',
-    roleId: 'kitchen',
-    roleName: 'Head Chef / KDS',
-    roleColor: '#D97706',
-    status: 'active',
-    permissions: PRESET_ROLES[2].permissions,
-    invitedAt: '2026-10-15T14:20:00.000Z',
-    lastLoginAt: '2026-11-24T18:15:00.000Z',
-  },
-  {
-    id: 'staff-3',
-    name: 'Pooja Verma',
-    email: 'pooja.waiter@tablly.com',
-    phone: '+91 97222 33445',
-    roleId: 'waiter',
-    roleName: 'Floor Captain',
-    roleColor: '#059669',
-    status: 'active',
-    permissions: PRESET_ROLES[3].permissions,
-    invitedAt: '2026-11-01T09:45:00.000Z',
-    lastLoginAt: '2026-11-24T21:05:00.000Z',
-  },
-  {
-    id: 'staff-4',
-    name: 'Amit Patel',
-    email: 'amit.cashier@tablly.com',
-    phone: '+91 96333 44556',
-    roleId: 'cashier',
-    roleName: 'Counter Cashier',
-    roleColor: '#7C3AED',
-    status: 'active',
-    permissions: PRESET_ROLES[4].permissions,
-    invitedAt: '2026-11-05T11:10:00.000Z',
-    lastLoginAt: '2026-11-24T19:50:00.000Z',
-  },
-  {
-    id: 'staff-5',
-    name: 'Vikram Singh',
-    email: 'vikram.mgr@tablly.com',
-    phone: '+91 95444 55667',
-    roleId: 'manager',
-    roleName: 'Floor Manager',
-    roleColor: '#2563EB',
-    status: 'pending_activation',
-    permissions: PRESET_ROLES[1].permissions,
-    invitedAt: '2026-11-23T16:00:00.000Z',
-    lastLoginAt: null,
-  },
-];
+export const INITIAL_STAFF_MEMBERS: MobileStaffMember[] = [];
 
 interface StaffState {
   staffMembers: MobileStaffMember[];

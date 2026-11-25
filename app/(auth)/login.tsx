@@ -13,29 +13,22 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/store/authStore';
 import { Colors } from '../../src/constants/theme';
-import { PRESET_ROLES } from '../../src/constants/roles';
-import { UtensilsCrossed, Lock, Mail, ShieldAlert, Sparkles, ChevronRight } from 'lucide-react-native';
+import { UtensilsCrossed, Lock, Mail, ShieldAlert, LogIn } from 'lucide-react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, loginAsDemoRole, isLoading, error, clearError } = useAuthStore();
+  const { login, isLoading, error, clearError } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
-    if (!email || !password) return;
+    if (!email.trim() || !password) return;
     clearError();
-    const success = await login(email, password);
+    const success = await login(email.trim(), password);
     if (success) {
       router.replace('/(app)');
     }
-  };
-
-  const handleDemoLogin = async (roleId: string) => {
-    clearError();
-    await loginAsDemoRole(roleId);
-    router.replace('/(app)');
   };
 
   return (
@@ -69,7 +62,7 @@ export default function LoginScreen() {
         <View style={styles.card}>
           <Text style={styles.cardHeading}>Sign In to Station</Text>
           <Text style={styles.cardSubheading}>
-            Enter your credentials or choose your assigned role below
+            Enter your restaurant admin or staff credentials registered in the database.
           </Text>
 
           {/* Email Input */}
@@ -79,12 +72,13 @@ export default function LoginScreen() {
               <Mail size={18} color={Colors.textSecondary} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="staff@restaurant.com"
+                placeholder="admin@restaurant.com"
                 placeholderTextColor={Colors.textMuted}
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
                 keyboardType="email-address"
+                autoCorrect={false}
               />
             </View>
           </View>
@@ -101,56 +95,34 @@ export default function LoginScreen() {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
+                autoCapitalize="none"
               />
             </View>
           </View>
 
-          {/* Sign In Button */}
+          {/* Submit Button */}
           <TouchableOpacity
-            style={[styles.primaryButton, (!email || !password || isLoading) && styles.buttonDisabled]}
+            style={[styles.loginBtn, (!email.trim() || !password || isLoading) && styles.loginBtnDisabled]}
             onPress={handleLogin}
-            disabled={!email || !password || isLoading}
+            disabled={!email.trim() || !password || isLoading}
             activeOpacity={0.8}
           >
             {isLoading ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
-              <Text style={styles.primaryButtonText}>Sign In</Text>
+              <View style={styles.btnContent}>
+                <LogIn size={18} color="#FFFFFF" />
+                <Text style={styles.loginBtnText}>Sign In to Station</Text>
+              </View>
             )}
           </TouchableOpacity>
         </View>
 
-        {/* Quick Demo Switcher Section */}
-        <View style={styles.demoSection}>
-          <View style={styles.demoSectionHeader}>
-            <Sparkles size={16} color={Colors.primary} />
-            <Text style={styles.demoSectionTitle}>Test Any Role in 1 Tap</Text>
-          </View>
-          <Text style={styles.demoSectionSubtitle}>
-            Tap a role to see how the app dynamically filters menus and permissions:
+        {/* Security & Database Status Footer */}
+        <View style={styles.footerNote}>
+          <Text style={styles.footerText}>
+            🔐 Secured with JWT & RBAC • Direct MongoDB Production Sync
           </Text>
-
-          <View style={styles.roleGrid}>
-            {PRESET_ROLES.map((role) => (
-              <TouchableOpacity
-                key={role.id}
-                style={[styles.roleCard, { borderColor: role.color + '40' }]}
-                onPress={() => handleDemoLogin(role.id)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.roleCardContent}>
-                  <View style={[styles.roleDot, { backgroundColor: role.color }]} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.roleName}>{role.name}</Text>
-                    <Text style={styles.roleDesc} numberOfLines={1}>
-                      {role.description}
-                    </Text>
-                  </View>
-                  <ChevronRight size={16} color={Colors.textMuted} />
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -164,12 +136,12 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 56,
+    paddingTop: 64,
     paddingBottom: 40,
   },
   brandHeader: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 28,
   },
   iconCircle: {
     width: 64,
@@ -200,8 +172,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.roseLight,
-    borderColor: Colors.roseBorder,
     borderWidth: 1,
+    borderColor: Colors.roseBorder,
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
@@ -210,39 +182,41 @@ const styles = StyleSheet.create({
   errorText: {
     color: Colors.rose,
     fontSize: 13,
+    fontWeight: '600',
     flex: 1,
   },
   card: {
     backgroundColor: Colors.card,
     borderRadius: 20,
-    padding: 20,
+    padding: 24,
     borderWidth: 1,
     borderColor: Colors.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 2,
   },
   cardHeading: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '800',
     color: Colors.text,
+    marginBottom: 6,
   },
   cardSubheading: {
     fontSize: 13,
     color: Colors.textSecondary,
-    marginTop: 4,
-    marginBottom: 18,
+    marginBottom: 20,
+    lineHeight: 18,
   },
   inputGroup: {
-    marginBottom: 14,
+    marginBottom: 16,
   },
   inputLabel: {
     fontSize: 13,
     fontWeight: '600',
     color: Colors.text,
-    marginBottom: 6,
+    marginBottom: 8,
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -252,79 +226,45 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     borderRadius: 12,
     paddingHorizontal: 12,
+    height: 48,
   },
   inputIcon: {
-    marginRight: 8,
+    marginRight: 10,
   },
   input: {
     flex: 1,
-    height: 46,
     fontSize: 15,
     color: Colors.text,
+    height: '100%',
   },
-  primaryButton: {
+  loginBtn: {
     backgroundColor: Colors.primary,
     height: 48,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 12,
   },
-  buttonDisabled: {
+  loginBtnDisabled: {
     opacity: 0.6,
   },
-  primaryButtonText: {
+  btnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  loginBtnText: {
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '700',
   },
-  demoSection: {
-    marginTop: 28,
-  },
-  demoSectionHeader: {
-    flexDirection: 'row',
+  footerNote: {
+    marginTop: 32,
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
   },
-  demoSectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.primaryDark,
-  },
-  demoSectionSubtitle: {
+  footerText: {
     fontSize: 12,
-    color: Colors.textSecondary,
-    marginBottom: 12,
-  },
-  roleGrid: {
-    gap: 8,
-  },
-  roleCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderWidth: 1.5,
-  },
-  roleCardContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  roleDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  roleName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.text,
-  },
-  roleDesc: {
-    fontSize: 11,
-    color: Colors.textSecondary,
-    marginTop: 2,
+    color: Colors.textMuted,
+    textAlign: 'center',
   },
 });

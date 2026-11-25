@@ -5,30 +5,26 @@ import { fetchDashboardAnalytics, DashboardMetrics } from '../../src/services/ap
 import { useAuthStore } from '../../src/store/authStore';
 import { TrendingUp, ShoppingBag, Users, Clock, Store, RefreshCw, Star } from 'lucide-react-native';
 
-const FALLBACK_KPI: DashboardMetrics = {
-  todayRevenue: 48250,
-  todayOrders: 64,
-  todayAvgOrderValue: 753,
-  yesterdayRevenue: 40750,
-  yesterdayOrders: 52,
-  activeTables: 14,
-  totalTables: 18,
-  occupancyRate: 78,
-  averageRating: 4.8,
-  pendingKOT: 6,
-  totalDishes: 42,
-  availableDishes: 39,
-  totalReviews: 86,
+const INITIAL_ZERO_KPI: DashboardMetrics = {
+  todayRevenue: 0,
+  todayOrders: 0,
+  todayAvgOrderValue: 0,
+  yesterdayRevenue: 0,
+  yesterdayOrders: 0,
+  activeTables: 0,
+  totalTables: 0,
+  occupancyRate: 0,
+  averageRating: 0,
+  pendingKOT: 0,
+  totalDishes: 0,
+  availableDishes: 0,
+  totalReviews: 0,
 };
 
 export default function DashboardScreen() {
   const { user } = useAuthStore();
-  const [kpi, setKpi] = useState<DashboardMetrics>(FALLBACK_KPI);
-  const [topDishes, setTopDishes] = useState<any[]>([
-    { name: 'Paneer Butter Masala', quantity: 32, revenue: 10240 },
-    { name: 'Crispy Garlic Naan', quantity: 58, revenue: 4640 },
-    { name: 'Tandoori Chicken Platter', quantity: 24, revenue: 9600 },
-  ]);
+  const [kpi, setKpi] = useState<DashboardMetrics>(INITIAL_ZERO_KPI);
+  const [topDishes, setTopDishes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [isApiLive, setIsApiLive] = useState(false);

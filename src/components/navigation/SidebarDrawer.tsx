@@ -39,7 +39,7 @@ export function SidebarDrawer() {
   const router = useRouter();
   const pathname = usePathname();
   const { isOpen, closeSidebar } = useSidebarStore();
-  const { user, logout, loginAsDemoRole } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const { roleName, role, hasPermission, isAdmin } = usePermissions();
 
   const handleNavigate = (path: string) => {
@@ -60,12 +60,6 @@ export function SidebarDrawer() {
         },
       },
     ]);
-  };
-
-  const handleSwitchRole = async (targetRoleId: string) => {
-    closeSidebar();
-    await loginAsDemoRole(targetRoleId);
-    router.replace('/(app)');
   };
 
   const canViewDashboard = isAdmin || hasPermission('biz_growth');
@@ -227,40 +221,6 @@ export function SidebarDrawer() {
                     </TouchableOpacity>
                   );
                 })}
-            </View>
-
-            {/* Quick Demo Role Switcher */}
-            <View style={styles.demoSection}>
-              <View style={styles.demoHeader}>
-                <Sparkles size={14} color={Colors.primary} />
-                <Text style={styles.demoTitle}>SWITCH STATION (LIVE DEMO)</Text>
-              </View>
-              <View style={styles.demoRolesGrid}>
-                {PRESET_ROLES.map((r) => {
-                  const isCurrent = user?.role === r.id;
-                  return (
-                    <TouchableOpacity
-                      key={r.id}
-                      style={[
-                        styles.demoRolePill,
-                        isCurrent && { borderColor: r.color, backgroundColor: r.color + '15' },
-                      ]}
-                      onPress={() => handleSwitchRole(r.id)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={[styles.demoRoleDot, { backgroundColor: r.color }]} />
-                      <Text
-                        style={[
-                          styles.demoRoleText,
-                          isCurrent && { color: r.color, fontWeight: '700' },
-                        ]}
-                      >
-                        {r.name}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
             </View>
 
             {/* Sign Out Button */}

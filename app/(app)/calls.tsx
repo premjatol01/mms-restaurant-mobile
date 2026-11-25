@@ -15,7 +15,7 @@ import {
 } from 'lucide-react-native';
 
 export default function CallsScreen() {
-  const { calls, filterType, setFilterType, dismissCall, simulateGuestCall, loadCalls } =
+  const { calls, filterType, setFilterType, dismissCall, loadCalls } =
     useWaiterCallsStore();
   const { hasPermission } = usePermissions();
 
@@ -49,20 +49,6 @@ export default function CallsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Simulation Banner */}
-      <View style={styles.simBanner}>
-        <TouchableOpacity
-          style={styles.simButton}
-          onPress={simulateGuestCall}
-          activeOpacity={0.8}
-        >
-          <Sparkles size={14} color="#FFFFFF" />
-          <Text style={styles.simButtonText}>
-            ⚡ Simulate Diner Service Call (Test Waiter Alert)
-          </Text>
-        </TouchableOpacity>
-      </View>
-
       {/* Filter Tabs */}
       <View style={styles.filterBar}>
         {(['all', 'water', 'bill', 'steward'] as const).map((ft) => {

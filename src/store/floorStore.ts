@@ -27,16 +27,7 @@ export interface FloorTable {
 
 const STORAGE_KEY = 'tablly_mobile_floor_v1';
 
-export const INITIAL_FLOOR_TABLES: FloorTable[] = [
-  { id: 'tbl-1', number: 'T-01', section: 'Main Hall', capacity: 2, status: 'available', items: [], subtotal: 0 },
-  { id: 'tbl-2', number: 'T-02', section: 'Main Hall', capacity: 4, status: 'available', items: [], subtotal: 0 },
-  { id: 'tbl-3', number: 'T-03', section: 'Main Hall', capacity: 4, status: 'available', items: [], subtotal: 0 },
-  { id: 'tbl-4', number: 'T-04', section: 'Main Hall', capacity: 6, status: 'available', items: [], subtotal: 0 },
-  { id: 'tbl-5', number: 'T-05', section: 'Balcony', capacity: 2, status: 'available', items: [], subtotal: 0 },
-  { id: 'tbl-6', number: 'T-06', section: 'Balcony', capacity: 4, status: 'available', items: [], subtotal: 0 },
-  { id: 'tbl-7', number: 'T-07', section: 'Outdoor', capacity: 6, status: 'available', items: [], subtotal: 0 },
-  { id: 'tbl-8', number: 'T-08', section: 'Outdoor', capacity: 4, status: 'available', items: [], subtotal: 0 },
-];
+export const INITIAL_FLOOR_TABLES: FloorTable[] = [];
 
 interface FloorState {
   tables: FloorTable[];

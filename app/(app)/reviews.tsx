@@ -12,52 +12,19 @@ import { Colors } from '../../src/constants/theme';
 import { fetchAdminReviewsApi, moderateReviewApi, ApiCustomerReview } from '../../src/services/api/reviewsApi';
 import { Star, CheckCircle, ThumbsUp, MessageSquare, ShieldCheck, Filter } from 'lucide-react-native';
 
-const FALLBACK_REVIEWS: ApiCustomerReview[] = [
-  {
-    _id: 'rev-1',
-    customerName: 'Ananya Deshmukh',
-    tableName: 'Table 4',
-    rating: 5,
-    comment: 'The Dal Makhani and Garlic Naan were out of this world! Incredible hospitality from captain Pooja.',
-    status: 'approved',
-    isSelectedForPortfolio: true,
-    createdAt: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: 'rev-2',
-    customerName: 'Rohan Mehra',
-    tableName: 'Table 9',
-    rating: 5,
-    comment: 'Loved the fast QR ordering at our table. Food arrived sizzling hot within 12 minutes.',
-    status: 'approved',
-    isSelectedForPortfolio: true,
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: 'rev-3',
-    customerName: 'Sanjay Gupta',
-    tableName: 'Table 2',
-    rating: 4,
-    comment: 'Food was delicious. Took a few extra minutes for the water refill during busy peak hours.',
-    status: 'pending',
-    isSelectedForPortfolio: false,
-    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-  },
-];
-
 export default function ReviewsScreen() {
-  const [reviews, setReviews] = useState<ApiCustomerReview[]>(FALLBACK_REVIEWS);
+  const [reviews, setReviews] = useState<ApiCustomerReview[]>([]);
   const [filter, setFilter] = useState<'all' | '5star' | 'critical'>('all');
   const [refreshing, setRefreshing] = useState(false);
 
   const loadReviews = async () => {
     try {
       const data = await fetchAdminReviewsApi();
-      if (data && data.length > 0) {
+      if (Array.isArray(data)) {
         setReviews(data);
       }
     } catch {
-      // Fallback stays in place
+      // Keep empty if API offline
     } finally {
       setRefreshing(false);
     }

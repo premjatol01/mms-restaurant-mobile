@@ -24,26 +24,7 @@ export interface InvoiceRecord {
 
 const STORAGE_KEY = 'tablly_mobile_settlements_v1';
 
-export const INITIAL_SETTLED_INVOICES: InvoiceRecord[] = [
-  {
-    id: 'inv-1',
-    invoiceNo: 'INV-1048',
-    tableId: 'tbl-prev-1',
-    tableNo: 'Table 3',
-    serverName: 'Captain',
-    cashierName: 'POS Cashier',
-    subtotal: 1450,
-    discount: 100,
-    gstAmount: 67.5,
-    total: 1417.5,
-    paymentMode: 'UPI',
-    settledAt: Date.now() - 45 * 60 * 1000,
-    items: [
-      { id: '1', name: 'Paneer Butter Masala', price: 320, quantity: 2 },
-      { id: '2', name: 'Butter Naan', price: 60, quantity: 5 },
-    ],
-  },
-];
+export const INITIAL_SETTLED_INVOICES: InvoiceRecord[] = [];
 
 interface BillingState {
   settledInvoices: InvoiceRecord[];

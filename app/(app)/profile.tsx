@@ -35,15 +35,15 @@ import {
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, logout, loginAsDemoRole } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const { roleName, role, isAdmin } = usePermissions();
 
-  // Restaurant Essential Fields
-  const [name, setName] = useState('Tablly Grand Bistro');
-  const [phone, setPhone] = useState('+91 98765 43210');
-  const [openingTime, setOpeningTime] = useState('11:00 AM');
-  const [closingTime, setClosingTime] = useState('11:30 PM');
-  const [upiId, setUpiId] = useState('tabllybistro@okaxis');
+  // Restaurant Essential Fields (Loaded from Database)
+  const [name, setName] = useState(user?.restaurantName || '');
+  const [phone, setPhone] = useState('');
+  const [openingTime, setOpeningTime] = useState('');
+  const [closingTime, setClosingTime] = useState('');
+  const [upiId, setUpiId] = useState('');
   const [isAcceptingOrders, setIsAcceptingOrders] = useState(true);
 
   const [saving, setSaving] = useState(false);
@@ -111,11 +111,6 @@ export default function ProfileScreen() {
         },
       },
     ]);
-  };
-
-  const handleSwitchRole = async (targetRoleId: string) => {
-    await loginAsDemoRole(targetRoleId);
-    router.replace('/(app)');
   };
 
   return (
@@ -243,51 +238,6 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
       )}
-
-      {/* Quick Station Switcher */}
-      <View style={styles.sectionCard}>
-        <View style={styles.demoHeader}>
-          <Sparkles size={14} color={Colors.primary} />
-          <Text style={styles.demoTitle}>TEST OTHER ROLES (LIVE DEMO)</Text>
-        </View>
-        <Text style={styles.sectionSubtitle}>
-          Tap any role below to experience the app as staff:
-        </Text>
-
-        <View style={styles.rolesGrid}>
-          {PRESET_ROLES.map((r) => {
-            const isCurrent = user?.role === r.id;
-            return (
-              <TouchableOpacity
-                key={r.id}
-                style={[
-                  styles.roleCard,
-                  isCurrent && { borderColor: r.color, backgroundColor: r.color + '10' },
-                ]}
-                onPress={() => handleSwitchRole(r.id)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.roleDot, { backgroundColor: r.color }]} />
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.roleName, isCurrent && { color: r.color, fontWeight: '800' }]}>
-                    {r.name}
-                  </Text>
-                  <Text style={styles.roleDesc} numberOfLines={1}>
-                    {r.description}
-                  </Text>
-                </View>
-                {isCurrent ? (
-                  <View style={[styles.activePill, { backgroundColor: r.color }]}>
-                    <Text style={styles.activePillText}>Active</Text>
-                  </View>
-                ) : (
-                  <ChevronRight size={16} color={Colors.textMuted} />
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
 
       {/* Logout Button */}
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>

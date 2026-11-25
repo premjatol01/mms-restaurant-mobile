@@ -14,16 +14,7 @@ export interface StockItem {
 
 const STOCK_STORAGE_KEY = 'tablly_mobile_stock_v1';
 
-export const INITIAL_MENU_ITEMS: StockItem[] = [
-  { id: 'm1', name: 'Paneer Butter Masala', category: 'Main Course', price: 320, isAvailable: true, isVegetarian: true },
-  { id: 'm2', name: 'Dal Makhani Slow Cooked', category: 'Main Course', price: 260, isAvailable: true, isVegetarian: true },
-  { id: 'm3', name: 'Tandoori Chicken Full', category: 'Starters', price: 480, isAvailable: true, isVegetarian: false },
-  { id: 'm4', name: 'Butter Garlic Naan', category: 'Breads', price: 80, isAvailable: true, isVegetarian: true },
-  { id: 'm5', name: 'Mutton Rogan Josh', category: 'Main Course', price: 540, isAvailable: true, isVegetarian: false },
-  { id: 'm6', name: 'Sweet Mango Lassi', category: 'Beverages', price: 120, isAvailable: true, isVegetarian: true },
-  { id: 'm7', name: 'Gulab Jamun with Rabri', category: 'Desserts', price: 160, isAvailable: true, isVegetarian: true },
-  { id: 'm8', name: 'Crispy Veg Spring Rolls', category: 'Starters', price: 220, isAvailable: true, isVegetarian: true },
-];
+export const INITIAL_MENU_ITEMS: StockItem[] = [];
 
 interface MenuStockState {
   items: StockItem[];

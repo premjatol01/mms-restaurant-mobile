@@ -23,36 +23,7 @@ export interface KOTTicket {
   createdAt: number; // timestamp
 }
 
-export const FALLBACK_SAMPLE_ORDERS: KOTTicket[] = [
-  {
-    id: 'kot-101',
-    kotNo: '#KOT-104',
-    tableNo: 'Table 4',
-    serverName: 'Captain',
-    orderType: 'Dine-In',
-    status: 'pending',
-    createdAt: Date.now() - 3 * 60 * 1000,
-    totalAmount: 890,
-    items: [
-      { id: 'i1', name: 'Paneer Butter Masala', quantity: 2, category: 'Main Course', notes: 'Medium spice', isVegetarian: true },
-      { id: 'i2', name: 'Butter Garlic Naan', quantity: 4, category: 'Breads', isVegetarian: true },
-    ],
-  },
-  {
-    id: 'kot-102',
-    kotNo: '#KOT-103',
-    tableNo: 'Table 9',
-    serverName: 'Captain',
-    orderType: 'Dine-In',
-    status: 'cooking',
-    createdAt: Date.now() - 11 * 60 * 1000,
-    totalAmount: 760,
-    items: [
-      { id: 'i4', name: 'Tandoori Chicken Full', quantity: 1, category: 'Starters', notes: 'Crispy', isVegetarian: false },
-      { id: 'i5', name: 'Tandoori Roti', quantity: 4, category: 'Breads', isVegetarian: true },
-    ],
-  },
-];
+export const FALLBACK_SAMPLE_ORDERS: KOTTicket[] = [];
 
 interface OrdersState {
   orders: KOTTicket[];
@@ -66,7 +37,6 @@ interface OrdersState {
   toggleKitchenDisplayMode: () => void;
   advanceStatus: (orderId: string) => Promise<void>;
   cancelOrder: (orderId: string, reason?: string) => Promise<void>;
-  simulateIncomingOrder: () => void;
 }
 
 export const useOrdersStore = create<OrdersState>((set, get) => ({
@@ -165,25 +135,5 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
     } catch (e) {
       console.warn('Failed to sync cancellation to server:', e);
     }
-  },
-
-  simulateIncomingOrder: () => {
-    const newKot: KOTTicket = {
-      id: `kot-live-${Date.now()}`,
-      kotNo: `#KOT-${Math.floor(100 + Math.random() * 900)}`,
-      tableNo: `Table ${Math.floor(1 + Math.random() * 12)}`,
-      serverName: 'Guest QR',
-      orderType: 'Dine-In',
-      status: 'pending',
-      createdAt: Date.now(),
-      totalAmount: 680,
-      items: [
-        { id: `i-${Date.now()}`, name: 'Crispy Garlic Naan', quantity: 3, category: 'Breads', isVegetarian: true },
-        { id: `i-${Date.now() + 1}`, name: 'Paneer Butter Masala', quantity: 1, category: 'Main Course', notes: 'Extra butter', isVegetarian: true },
-      ],
-    };
-
-    set((state) => ({ orders: [newKot, ...state.orders] }));
-    playUrgentNewOrderFeedback();
   },
 }));
