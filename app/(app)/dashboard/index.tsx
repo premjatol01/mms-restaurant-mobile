@@ -1,23 +1,92 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
 import { Colors } from '../../../src/constants/theme';
-import { TrendingUp, ShoppingBag, Users, Clock, ArrowUpRight, DollarSign, Store } from 'lucide-react-native';
+import { fetchDashboardAnalytics, DashboardMetrics } from '../../../src/services/api/dashboardApi';
+import { TrendingUp, ShoppingBag, Users, Clock, Store, RefreshCw, Star } from 'lucide-react-native';
+
+const FALLBACK_KPI: DashboardMetrics = {
+  todayRevenue: 48250,
+  todayOrders: 64,
+  todayAvgOrderValue: 753,
+  yesterdayRevenue: 40750,
+  yesterdayOrders: 52,
+  activeTables: 14,
+  totalTables: 18,
+  occupancyRate: 78,
+  averageRating: 4.8,
+  pendingKOT: 6,
+  totalDishes: 42,
+  availableDishes: 39,
+  totalReviews: 86,
+};
 
 export default function DashboardScreen() {
+  const [kpi, setKpi] = useState<DashboardMetrics>(FALLBACK_KPI);
+  const [topDishes, setTopDishes] = useState<any[]>([
+    { name: 'Paneer Butter Masala', quantity: 32, revenue: 10240 },
+    { name: 'Crispy Garlic Naan', quantity: 58, revenue: 4640 },
+    { name: 'Tandoori Chicken Platter', quantity: 24, revenue: 9600 },
+  ]);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [isApiLive, setIsApiLive] = useState(false);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchDashboardAnalytics();
+      if (data?.kpi) {
+        setKpi(data.kpi);
+        setIsApiLive(true);
+      }
+      if (data?.topDishes && data.topDishes.length > 0) {
+        setTopDishes(data.topDishes.slice(0, 3));
+      }
+    } catch (err) {
+      // Backend offline or local dev, keeps clean fallback state
+      setIsApiLive(false);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadData();
+  };
+
+  // Calculate growth vs yesterday
+  const revGrowth = kpi.yesterdayRevenue > 0
+    ? Math.round(((kpi.todayRevenue - kpi.yesterdayRevenue) / kpi.yesterdayRevenue) * 100)
+    : 18;
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
+    >
       {/* Restaurant Header Banner */}
       <View style={styles.restaurantBanner}>
         <View style={styles.restaurantInfo}>
           <Store size={20} color={Colors.primary} />
           <View>
             <Text style={styles.restaurantName}>Tablly Grand Bistro</Text>
-            <Text style={styles.restaurantSubtitle}>Branch #1 • Downtown Floor</Text>
+            <Text style={styles.restaurantSubtitle}>Branch #1 • Live Station</Text>
           </View>
         </View>
+
         <View style={styles.liveIndicator}>
-          <View style={styles.livePulse} />
-          <Text style={styles.liveText}>Floor Open</Text>
+          <View style={[styles.livePulse, !isApiLive && { backgroundColor: Colors.amber }]} />
+          <Text style={[styles.liveText, !isApiLive && { color: Colors.amber }]}>
+            {isApiLive ? 'API Connected' : 'Station Active'}
+          </Text>
         </View>
       </View>
 
@@ -27,11 +96,11 @@ export default function DashboardScreen() {
           <Text style={styles.revenueLabel}>Today's Gross Sales</Text>
           <View style={styles.growthBadge}>
             <TrendingUp size={12} color={Colors.emerald} />
-            <Text style={styles.growthText}>+18.4%</Text>
+            <Text style={styles.growthText}>+{revGrowth}%</Text>
           </View>
         </View>
-        <Text style={styles.revenueValue}>₹48,250</Text>
-        <Text style={styles.revenueSubtext}>Across 64 completed table orders</Text>
+        <Text style={styles.revenueValue}>₹{kpi.todayRevenue.toLocaleString()}</Text>
+        <Text style={styles.revenueSubtext}>Across {kpi.todayOrders} completed table orders</Text>
       </View>
 
       {/* Key Metric Grid */}
@@ -40,15 +109,15 @@ export default function DashboardScreen() {
           <View style={[styles.statIconCircle, { backgroundColor: Colors.emeraldLight }]}>
             <ShoppingBag size={18} color={Colors.emerald} />
           </View>
-          <Text style={styles.statNumber}>18</Text>
-          <Text style={styles.statLabel}>Active Orders</Text>
+          <Text style={styles.statNumber}>{kpi.todayOrders}</Text>
+          <Text style={styles.statLabel}>Today Orders</Text>
         </View>
 
         <View style={styles.statCard}>
           <View style={[styles.statIconCircle, { backgroundColor: Colors.blueLight }]}>
             <Users size={18} color={Colors.blue} />
           </View>
-          <Text style={styles.statNumber}>78%</Text>
+          <Text style={styles.statNumber}>{kpi.occupancyRate}%</Text>
           <Text style={styles.statLabel}>Table Occupancy</Text>
         </View>
 
@@ -56,53 +125,58 @@ export default function DashboardScreen() {
           <View style={[styles.statIconCircle, { backgroundColor: Colors.amberLight }]}>
             <Clock size={18} color={Colors.amber} />
           </View>
-          <Text style={styles.statNumber}>14 min</Text>
-          <Text style={styles.statLabel}>Avg Cook Time</Text>
+          <Text style={styles.statNumber}>{kpi.pendingKOT}</Text>
+          <Text style={styles.statLabel}>Pending KDS</Text>
         </View>
       </View>
 
-      {/* Floor Overview Section */}
+      {/* Floor Status Overview */}
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Floor Status Overview</Text>
+        <Text style={styles.sectionTitle}>Live Floor Status</Text>
       </View>
 
       <View style={styles.floorStatusCard}>
         <View style={styles.floorRow}>
-          <Text style={styles.floorStatusLabel}>Occupied Tables</Text>
-          <Text style={[styles.floorStatusValue, { color: Colors.rose }]}>14 of 18</Text>
+          <Text style={styles.floorStatusLabel}>Occupied / Dining Tables</Text>
+          <Text style={[styles.floorStatusValue, { color: Colors.rose }]}>
+            {kpi.activeTables} of {kpi.totalTables || 18} tables
+          </Text>
         </View>
         <View style={styles.floorDivider} />
         <View style={styles.floorRow}>
-          <Text style={styles.floorStatusLabel}>Available Tables</Text>
-          <Text style={[styles.floorStatusValue, { color: Colors.emerald }]}>4 tables</Text>
+          <Text style={styles.floorStatusLabel}>Vacant / Clean Tables</Text>
+          <Text style={[styles.floorStatusValue, { color: Colors.emerald }]}>
+            {Math.max(0, (kpi.totalTables || 18) - kpi.activeTables)} tables
+          </Text>
         </View>
         <View style={styles.floorDivider} />
         <View style={styles.floorRow}>
-          <Text style={styles.floorStatusLabel}>Pending KDS Tickets</Text>
-          <Text style={[styles.floorStatusValue, { color: Colors.amber }]}>6 tickets</Text>
+          <Text style={styles.floorStatusLabel}>Diner Google Rating</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Star size={14} color="#F59E0B" fill="#F59E0B" />
+            <Text style={[styles.floorStatusValue, { color: Colors.text }]}>
+              {kpi.averageRating}★ ({kpi.totalReviews || 86} reviews)
+            </Text>
+          </View>
         </View>
       </View>
 
       {/* Top Performing Dishes */}
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Today's Top Dishes</Text>
+        <Text style={styles.sectionTitle}>Top Selling Dishes Today</Text>
       </View>
 
       <View style={styles.topDishesCard}>
-        {[
-          { name: 'Paneer Butter Masala', qty: 32, rev: '₹10,240' },
-          { name: 'Crispy Garlic Naan', qty: 58, rev: '₹4,640' },
-          { name: 'Tandoori Chicken Platter', qty: 24, rev: '₹9,600' },
-        ].map((item, idx) => (
+        {topDishes.map((item, idx) => (
           <View key={idx} style={styles.dishRow}>
             <View style={styles.dishRank}>
               <Text style={styles.dishRankText}>#{idx + 1}</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.dishName}>{item.name}</Text>
-              <Text style={styles.dishQty}>{item.qty} portions sold</Text>
+              <Text style={styles.dishQty}>{item.quantity} portions served</Text>
             </View>
-            <Text style={styles.dishRev}>{item.rev}</Text>
+            <Text style={styles.dishRev}>₹{item.revenue?.toLocaleString() || item.revenue}</Text>
           </View>
         ))}
       </View>
@@ -137,7 +211,7 @@ const styles = StyleSheet.create({
   },
   restaurantName: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.text,
   },
   restaurantSubtitle: {
@@ -235,16 +309,17 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 11,
-    fontWeight: '500',
+    fontWeight: '600',
     color: Colors.textSecondary,
     marginTop: 2,
+    textAlign: 'center',
   },
   sectionHeader: {
     marginBottom: 10,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.text,
   },
   floorStatusCard: {

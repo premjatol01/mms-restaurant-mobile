@@ -177,6 +177,26 @@ export default function AppLayout() {
           }}
         />
 
+        {/* Menu & 86 Stock (Accessible from Sidebar) */}
+        <Tabs.Screen
+          name="menu/index"
+          options={{
+            href: null,
+            title: 'Menu',
+            headerTitle: 'Menu & 86 Item Availability',
+          }}
+        />
+
+        {/* Customer Reviews (Accessible from Sidebar) */}
+        <Tabs.Screen
+          name="reviews/index"
+          options={{
+            href: null,
+            title: 'Reviews',
+            headerTitle: 'Customer Reviews & Ratings',
+          }}
+        />
+
         {/* 7. Profile / Station (Available on bottom bar for staff without 4 operational tabs) */}
         <Tabs.Screen
           name="profile/index"

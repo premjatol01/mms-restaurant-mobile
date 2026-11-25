@@ -30,6 +30,7 @@ import {
   ChevronRight,
   ShieldCheck,
   Sparkles,
+  Star,
 } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
@@ -70,6 +71,8 @@ export function SidebarDrawer() {
   const canViewDashboard = isAdmin || hasPermission('biz_growth');
   const canViewTables = hasPermission('tables_view');
   const canViewOrders = hasPermission('orders_view');
+  const canViewMenu = isAdmin || hasPermission('menu_availability') || hasPermission('menu_view');
+  const canViewReviews = isAdmin || hasPermission('reviews_manage');
   const canViewCalls = hasPermission('waiter_handler');
   const canViewBilling = hasPermission('billing_settle');
   const canViewStaff = hasPermission('staff_manage');
@@ -97,6 +100,20 @@ export function SidebarDrawer() {
       allowed: canViewOrders,
     },
     {
+      id: 'menu',
+      label: 'Menu & 86 Stock',
+      icon: LayoutGrid,
+      path: '/menu',
+      allowed: canViewMenu,
+    },
+    {
+      id: 'reviews',
+      label: 'Customer Reviews',
+      icon: Star,
+      path: '/reviews',
+      allowed: canViewReviews,
+    },
+    {
       id: 'calls',
       label: 'Guest Service Calls',
       icon: Bell,
@@ -119,7 +136,7 @@ export function SidebarDrawer() {
     },
     {
       id: 'profile',
-      label: 'My Station Profile',
+      label: 'Restaurant Settings',
       icon: User,
       path: '/profile',
       allowed: true,
