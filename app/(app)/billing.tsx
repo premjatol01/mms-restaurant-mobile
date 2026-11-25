@@ -10,10 +10,10 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import { useBillingStore, InvoiceRecord } from '../../../src/store/billingStore';
-import { useFloorStore, FloorTable } from '../../../src/store/floorStore';
-import { usePermissions } from '../../../src/hooks/usePermissions';
-import { Colors } from '../../../src/constants/theme';
+import { useBillingStore, InvoiceRecord } from '../../src/store/billingStore';
+import { useFloorStore, FloorTable } from '../../src/store/floorStore';
+import { usePermissions } from '../../src/hooks/usePermissions';
+import { Colors } from '../../src/constants/theme';
 import {
   Receipt,
   CreditCard,

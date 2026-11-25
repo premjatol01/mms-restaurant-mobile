@@ -11,15 +11,15 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuthStore } from '../../../src/store/authStore';
-import { usePermissions } from '../../../src/hooks/usePermissions';
-import { Colors } from '../../../src/constants/theme';
-import { PRESET_ROLES } from '../../../src/constants/roles';
+import { useAuthStore } from '../../src/store/authStore';
+import { usePermissions } from '../../src/hooks/usePermissions';
+import { Colors } from '../../src/constants/theme';
+import { PRESET_ROLES } from '../../src/constants/roles';
 import {
   fetchRestaurantProfileApi,
   updateRestaurantProfileApi,
   RestaurantProfileData,
-} from '../../../src/services/api/profileApi';
+} from '../../src/services/api/profileApi';
 import {
   Store,
   Phone,

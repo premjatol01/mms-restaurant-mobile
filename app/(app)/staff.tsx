@@ -11,9 +11,9 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useStaffStore, MobileStaffMember } from '../../../src/store/staffStore';
-import { Colors } from '../../../src/constants/theme';
-import { PRESET_ROLES, PERMISSION_GROUPS, PresetRole } from '../../../src/constants/roles';
+import { useStaffStore, MobileStaffMember } from '../../src/store/staffStore';
+import { Colors } from '../../src/constants/theme';
+import { PRESET_ROLES, PERMISSION_GROUPS, PresetRole } from '../../src/constants/roles';
 import {
   Users,
   UserPlus,
@@ -39,6 +39,7 @@ export default function StaffScreen() {
   } = useStaffStore();
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<MobileStaffMember | null>(null);
 
   // New staff form state
   const [name, setName] = useState('');
@@ -209,7 +210,7 @@ export default function StaffScreen() {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.staffCard}
-            onPress={() => router.push(`/staff/${item.id}`)}
+            onPress={() => setSelectedMember(item)}
             activeOpacity={0.7}
           >
             <View style={styles.cardMain}>
@@ -405,6 +406,117 @@ export default function StaffScreen() {
             </TouchableOpacity>
 
             <View style={{ height: 40 }} />
+          </ScrollView>
+        </View>
+      </Modal>
+
+      {/* Staff Member Detail & Status Modal */}
+      <Modal
+        visible={!!selectedMember}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setSelectedMember(null)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <View>
+              <Text style={styles.modalTitle}>{selectedMember?.name || 'Staff Details'}</Text>
+              <Text style={styles.modalSubtitle}>{selectedMember?.roleName || 'Role'}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.modalCloseBtn}
+              onPress={() => setSelectedMember(null)}
+            >
+              <X size={20} color={Colors.text} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+            {selectedMember && (
+              <>
+                <View style={[styles.statsBanner, { marginTop: 8 }]}>
+                  <View style={styles.statBox}>
+                    <Text style={styles.statVal}>{selectedMember.roleName}</Text>
+                    <Text style={styles.statLbl}>Station Role</Text>
+                  </View>
+                  <View style={styles.statDivider} />
+                  <View style={styles.statBox}>
+                    <Text
+                      style={[
+                        styles.statVal,
+                        {
+                          color:
+                            selectedMember.status === 'active'
+                              ? Colors.emerald
+                              : selectedMember.status === 'pending_activation'
+                              ? Colors.amber
+                              : Colors.rose,
+                        },
+                      ]}
+                    >
+                      {selectedMember.status.toUpperCase()}
+                    </Text>
+                    <Text style={styles.statLbl}>Current Status</Text>
+                  </View>
+                </View>
+
+                <View style={styles.formSection}>
+                  <Text style={styles.formSectionTitle}>CONTACT INFORMATION</Text>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Email Address</Text>
+                    <TextInput
+                      style={[styles.input, { backgroundColor: Colors.cardMuted }]}
+                      value={selectedMember.email}
+                      editable={false}
+                    />
+                  </View>
+                  {selectedMember.phone && (
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>Mobile Number</Text>
+                      <TextInput
+                        style={[styles.input, { backgroundColor: Colors.cardMuted }]}
+                        value={selectedMember.phone}
+                        editable={false}
+                      />
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.formSection}>
+                  <Text style={styles.formSectionTitle}>
+                    ACTIVE PERMISSIONS ({selectedMember.permissions.length})
+                  </Text>
+                  {selectedMember.permissions.map((p) => (
+                    <View key={p} style={[styles.permItem, { paddingVertical: 10 }]}>
+                      <Shield size={16} color={Colors.primary} />
+                      <Text style={[styles.permLabel, { marginLeft: 10 }]}>{p}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                <TouchableOpacity
+                  style={[
+                    styles.modalSubmitBtn,
+                    {
+                      backgroundColor:
+                        selectedMember.status === 'active' ? Colors.rose : Colors.emerald,
+                      marginTop: 20,
+                    },
+                  ]}
+                  onPress={async () => {
+                    await toggleMemberStatus(selectedMember.id);
+                    setSelectedMember(null);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.modalSubmitText}>
+                    {selectedMember.status === 'active' ? 'Suspend Staff Member' : 'Activate Staff Member'}
+                  </Text>
+                </TouchableOpacity>
+
+                <View style={{ height: 40 }} />
+              </>
+            )}
           </ScrollView>
         </View>
       </Modal>

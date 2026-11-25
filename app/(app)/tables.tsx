@@ -10,10 +10,10 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import { useFloorStore, FloorTable } from '../../../src/store/floorStore';
-import { useMenuStockStore } from '../../../src/store/menuStockStore';
-import { usePermissions } from '../../../src/hooks/usePermissions';
-import { Colors } from '../../../src/constants/theme';
+import { useFloorStore, FloorTable } from '../../src/store/floorStore';
+import { useMenuStockStore } from '../../src/store/menuStockStore';
+import { usePermissions } from '../../src/hooks/usePermissions';
+import { Colors } from '../../src/constants/theme';
 import {
   Users,
   Plus,

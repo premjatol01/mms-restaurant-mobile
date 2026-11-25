@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { playUrgentNewOrderFeedback, playOrderReadyFeedback, playTouchFeedback } from '../services/audio/soundService';
+import { apiClient } from '../services/api/client';
 
 export interface OrderItem {
   id: string;
@@ -22,48 +23,33 @@ export interface KOTTicket {
   createdAt: number; // timestamp
 }
 
-const SAMPLE_ORDERS: KOTTicket[] = [
+export const FALLBACK_SAMPLE_ORDERS: KOTTicket[] = [
   {
     id: 'kot-101',
     kotNo: '#KOT-104',
     tableNo: 'Table 4',
-    serverName: 'Pooja V. (Captain)',
+    serverName: 'Captain',
     orderType: 'Dine-In',
     status: 'pending',
-    createdAt: Date.now() - 3 * 60 * 1000, // 3 mins ago
+    createdAt: Date.now() - 3 * 60 * 1000,
     totalAmount: 890,
     items: [
-      { id: 'i1', name: 'Paneer Butter Masala', quantity: 2, category: 'Main Course', notes: 'Medium spice, extra butter', isVegetarian: true },
+      { id: 'i1', name: 'Paneer Butter Masala', quantity: 2, category: 'Main Course', notes: 'Medium spice', isVegetarian: true },
       { id: 'i2', name: 'Butter Garlic Naan', quantity: 4, category: 'Breads', isVegetarian: true },
-      { id: 'i3', name: 'Sweet Mango Lassi', quantity: 2, category: 'Beverages', isVegetarian: true },
     ],
   },
   {
     id: 'kot-102',
     kotNo: '#KOT-103',
     tableNo: 'Table 9',
-    serverName: 'Amit P.',
+    serverName: 'Captain',
     orderType: 'Dine-In',
     status: 'cooking',
-    createdAt: Date.now() - 11 * 60 * 1000, // 11 mins ago
+    createdAt: Date.now() - 11 * 60 * 1000,
     totalAmount: 760,
     items: [
-      { id: 'i4', name: 'Tandoori Chicken Full', quantity: 1, category: 'Starters', notes: 'Well done, crispy skin', isVegetarian: false },
+      { id: 'i4', name: 'Tandoori Chicken Full', quantity: 1, category: 'Starters', notes: 'Crispy', isVegetarian: false },
       { id: 'i5', name: 'Tandoori Roti', quantity: 4, category: 'Breads', isVegetarian: true },
-    ],
-  },
-  {
-    id: 'kot-103',
-    kotNo: '#KOT-102',
-    tableNo: 'Table 2',
-    serverName: 'Pooja V.',
-    orderType: 'Dine-In',
-    status: 'ready',
-    createdAt: Date.now() - 17 * 60 * 1000, // 17 mins ago
-    totalAmount: 480,
-    items: [
-      { id: 'i6', name: 'Dal Makhani Slow Cooked', quantity: 1, category: 'Main Course', isVegetarian: true },
-      { id: 'i7', name: 'Jeera Basmati Rice', quantity: 2, category: 'Rice', isVegetarian: true },
     ],
   },
 ];
@@ -71,8 +57,11 @@ const SAMPLE_ORDERS: KOTTicket[] = [
 interface OrdersState {
   orders: KOTTicket[];
   activeFilter: 'all' | 'pending' | 'cooking' | 'ready';
-  kitchenDisplayMode: boolean; // High-contrast tablet mode
+  kitchenDisplayMode: boolean;
+  isLoading: boolean;
+  isLiveApi: boolean;
 
+  loadOrders: () => Promise<void>;
   setActiveFilter: (filter: 'all' | 'pending' | 'cooking' | 'ready') => void;
   toggleKitchenDisplayMode: () => void;
   advanceStatus: (orderId: string) => Promise<void>;
@@ -81,9 +70,11 @@ interface OrdersState {
 }
 
 export const useOrdersStore = create<OrdersState>((set, get) => ({
-  orders: SAMPLE_ORDERS,
+  orders: FALLBACK_SAMPLE_ORDERS,
   activeFilter: 'all',
   kitchenDisplayMode: false,
+  isLoading: false,
+  isLiveApi: false,
 
   setActiveFilter: (filter) => {
     playTouchFeedback();
@@ -95,61 +86,104 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
     set((state) => ({ kitchenDisplayMode: !state.kitchenDisplayMode }));
   },
 
+  loadOrders: async () => {
+    set({ isLoading: true });
+    try {
+      const response = await apiClient.get('/orders');
+      if (response.data?.success && Array.isArray(response.data.data)) {
+        const rawOrders = response.data.data;
+        const liveOrders: KOTTicket[] = rawOrders.map((o: any) => ({
+          id: o._id,
+          kotNo: o.orderNumber || `#${o._id.slice(-4).toUpperCase()}`,
+          tableNo: o.tableId?.tableNo ? `Table ${o.tableId.tableNo}` : (o.tableId?.tableId || 'Table'),
+          serverName: o.customer?.name || (o.source === 'qr' ? 'Self (QR)' : 'Captain'),
+          orderType: 'Dine-In',
+          status: o.status || 'pending',
+          createdAt: o.createdAt ? new Date(o.createdAt).getTime() : Date.now(),
+          totalAmount: o.total || 0,
+          items: (o.items || []).map((it: any) => ({
+            id: it._id || String(Math.random()),
+            name: it.name,
+            quantity: it.quantity || 1,
+            category: it.category || 'Dishes',
+            notes: it.notes,
+            isVegetarian: it.isVegetarian ?? true,
+          })),
+        }));
+
+        set({ orders: liveOrders, isLiveApi: true, isLoading: false });
+        return;
+      }
+    } catch (e) {
+      // Backend offline fallback
+    }
+
+    set({ isLoading: false });
+  },
+
   advanceStatus: async (orderId: string) => {
     const target = get().orders.find((o) => o.id === orderId);
     if (!target) return;
 
-    if (target.status === 'cooking') {
-      await playOrderReadyFeedback();
+    let nextStatus: KOTTicket['status'] = 'cooking';
+    if (target.status === 'pending') {
+      nextStatus = 'cooking';
+      playTouchFeedback();
+    } else if (target.status === 'cooking') {
+      nextStatus = 'ready';
+      playOrderReadyFeedback();
+    } else if (target.status === 'ready') {
+      nextStatus = 'served';
+      playTouchFeedback();
     } else {
-      await playTouchFeedback();
+      return;
     }
 
-    set((state) => ({
-      orders: state.orders
-        .map((ord) => {
-          if (ord.id !== orderId) return ord;
-          if (ord.status === 'pending') return { ...ord, status: 'cooking' as const };
-          if (ord.status === 'cooking') return { ...ord, status: 'ready' as const };
-          if (ord.status === 'ready') return { ...ord, status: 'served' as const };
-          return ord;
-        })
-        .filter((ord) => ord.status !== 'served'), // Dispatched tickets leave active board
-    }));
+    // Optimistically update local UI
+    const updated = get().orders.map((o) =>
+      o.id === orderId ? { ...o, status: nextStatus } : o
+    );
+    set({ orders: updated });
+
+    // Sync status change with real backend
+    try {
+      await apiClient.put(`/orders/${orderId}/status`, { status: nextStatus });
+    } catch (e) {
+      console.warn('Failed to sync order status to server:', e);
+    }
   },
 
-  cancelOrder: async (orderId: string) => {
-    await playTouchFeedback();
-    set((state) => ({
-      orders: state.orders.map((ord) =>
-        ord.id === orderId ? { ...ord, status: 'cancelled' as const } : ord
-      ),
-    }));
+  cancelOrder: async (orderId: string, reason?: string) => {
+    playTouchFeedback();
+    const updated = get().orders.map((o) =>
+      o.id === orderId ? { ...o, status: 'cancelled' as const } : o
+    );
+    set({ orders: updated });
+
+    try {
+      await apiClient.put(`/orders/${orderId}/status`, { status: 'cancelled', reason });
+    } catch (e) {
+      console.warn('Failed to sync cancellation to server:', e);
+    }
   },
 
   simulateIncomingOrder: () => {
-    playUrgentNewOrderFeedback();
-    const tableNumbers = ['Table 1', 'Table 3', 'Table 6', 'Table 8', 'Table 10'];
-    const randomTable = tableNumbers[Math.floor(Math.random() * tableNumbers.length)];
-    const randomKotNum = Math.floor(105 + Math.random() * 50);
-
-    const newTicket: KOTTicket = {
-      id: `kot-${Date.now()}`,
-      kotNo: `#KOT-${randomKotNum}`,
-      tableNo: randomTable,
-      serverName: 'Guest QR Order',
+    const newKot: KOTTicket = {
+      id: `kot-live-${Date.now()}`,
+      kotNo: `#KOT-${Math.floor(100 + Math.random() * 900)}`,
+      tableNo: `Table ${Math.floor(1 + Math.random() * 12)}`,
+      serverName: 'Guest QR',
       orderType: 'Dine-In',
       status: 'pending',
       createdAt: Date.now(),
-      totalAmount: 640,
+      totalAmount: 680,
       items: [
-        { id: `sim-${Date.now()}-1`, name: 'Crispy Veg Spring Rolls', quantity: 2, category: 'Starters', notes: 'Extra sweet chili dip', isVegetarian: true },
-        { id: `sim-${Date.now()}-2`, name: 'Cold Pressed Lime Soda', quantity: 2, category: 'Beverages', isVegetarian: true },
+        { id: `i-${Date.now()}`, name: 'Crispy Garlic Naan', quantity: 3, category: 'Breads', isVegetarian: true },
+        { id: `i-${Date.now() + 1}`, name: 'Paneer Butter Masala', quantity: 1, category: 'Main Course', notes: 'Extra butter', isVegetarian: true },
       ],
     };
 
-    set((state) => ({
-      orders: [newTicket, ...state.orders],
-    }));
+    set((state) => ({ orders: [newKot, ...state.orders] }));
+    playUrgentNewOrderFeedback();
   },
 }));

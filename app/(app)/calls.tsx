@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import { useWaiterCallsStore, ServiceCall } from '../../../src/store/waiterCallsStore';
-import { usePermissions } from '../../../src/hooks/usePermissions';
-import { Colors } from '../../../src/constants/theme';
+import { useWaiterCallsStore, ServiceCall } from '../../src/store/waiterCallsStore';
+import { usePermissions } from '../../src/hooks/usePermissions';
+import { Colors } from '../../src/constants/theme';
 import {
   Bell,
   Droplets,

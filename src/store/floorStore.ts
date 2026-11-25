@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { playTouchFeedback, playOrderReadyFeedback } from '../services/audio/soundService';
-import { useOrdersStore } from './ordersStore';
+import { apiClient } from '../services/api/client';
 
 export interface TableItem {
   id: string;
@@ -22,117 +22,28 @@ export interface FloorTable {
   seatedAt?: number;
   items: TableItem[];
   subtotal: number;
+  sessionId?: string;
 }
 
 const STORAGE_KEY = 'tablly_mobile_floor_v1';
 
 export const INITIAL_FLOOR_TABLES: FloorTable[] = [
-  {
-    id: 'tbl-1',
-    number: 'T-01',
-    section: 'Main Hall',
-    capacity: 2,
-    status: 'available',
-    items: [],
-    subtotal: 0,
-  },
-  {
-    id: 'tbl-2',
-    number: 'T-02',
-    section: 'Main Hall',
-    capacity: 4,
-    status: 'occupied',
-    guests: 3,
-    serverName: 'Pooja V.',
-    seatedAt: Date.now() - 35 * 60 * 1000,
-    items: [
-      { id: 'i1', name: 'Paneer Butter Masala', price: 320, quantity: 2, notes: 'Less spicy' },
-      { id: 'i2', name: 'Butter Garlic Naan', price: 80, quantity: 4 },
-      { id: 'i3', name: 'Sweet Mango Lassi', price: 120, quantity: 2 },
-    ],
-    subtotal: 1200,
-  },
-  {
-    id: 'tbl-3',
-    number: 'T-03',
-    section: 'Main Hall',
-    capacity: 4,
-    status: 'available',
-    items: [],
-    subtotal: 0,
-  },
-  {
-    id: 'tbl-4',
-    number: 'T-04',
-    section: 'Balcony',
-    capacity: 6,
-    status: 'occupied',
-    guests: 5,
-    serverName: 'Amit P.',
-    seatedAt: Date.now() - 48 * 60 * 1000,
-    items: [
-      { id: 'i4', name: 'Tandoori Chicken Full', price: 480, quantity: 2 },
-      { id: 'i5', name: 'Dal Makhani', price: 260, quantity: 2 },
-      { id: 'i6', name: 'Jeera Rice', price: 160, quantity: 3 },
-    ],
-    subtotal: 1960,
-  },
-  {
-    id: 'tbl-5',
-    number: 'T-05',
-    section: 'Balcony',
-    capacity: 2,
-    status: 'billed',
-    guests: 2,
-    serverName: 'Pooja V.',
-    seatedAt: Date.now() - 70 * 60 * 1000,
-    items: [
-      { id: 'i7', name: 'Dal Makhani', price: 260, quantity: 1 },
-      { id: 'i8', name: 'Butter Naan', price: 60, quantity: 3 },
-      { id: 'i9', name: 'Gulab Jamun', price: 160, quantity: 2 },
-    ],
-    subtotal: 760,
-  },
-  {
-    id: 'tbl-6',
-    number: 'T-06',
-    section: 'Outdoor',
-    capacity: 4,
-    status: 'available',
-    items: [],
-    subtotal: 0,
-  },
-  {
-    id: 'tbl-7',
-    number: 'T-07',
-    section: 'Outdoor',
-    capacity: 8,
-    status: 'occupied',
-    guests: 7,
-    serverName: 'Pooja V.',
-    seatedAt: Date.now() - 22 * 60 * 1000,
-    items: [
-      { id: 'i10', name: 'Mutton Rogan Josh', price: 540, quantity: 2 },
-      { id: 'i11', name: 'Crispy Veg Spring Rolls', price: 220, quantity: 3 },
-      { id: 'i12', name: 'Butter Garlic Naan', price: 80, quantity: 6 },
-    ],
-    subtotal: 2220,
-  },
-  {
-    id: 'tbl-8',
-    number: 'T-08',
-    section: 'Outdoor',
-    capacity: 4,
-    status: 'available',
-    items: [],
-    subtotal: 0,
-  },
+  { id: 'tbl-1', number: 'T-01', section: 'Main Hall', capacity: 2, status: 'available', items: [], subtotal: 0 },
+  { id: 'tbl-2', number: 'T-02', section: 'Main Hall', capacity: 4, status: 'available', items: [], subtotal: 0 },
+  { id: 'tbl-3', number: 'T-03', section: 'Main Hall', capacity: 4, status: 'available', items: [], subtotal: 0 },
+  { id: 'tbl-4', number: 'T-04', section: 'Main Hall', capacity: 6, status: 'available', items: [], subtotal: 0 },
+  { id: 'tbl-5', number: 'T-05', section: 'Balcony', capacity: 2, status: 'available', items: [], subtotal: 0 },
+  { id: 'tbl-6', number: 'T-06', section: 'Balcony', capacity: 4, status: 'available', items: [], subtotal: 0 },
+  { id: 'tbl-7', number: 'T-07', section: 'Outdoor', capacity: 6, status: 'available', items: [], subtotal: 0 },
+  { id: 'tbl-8', number: 'T-08', section: 'Outdoor', capacity: 4, status: 'available', items: [], subtotal: 0 },
 ];
 
 interface FloorState {
   tables: FloorTable[];
   sectionFilter: string;
   statusFilter: string;
+  isLoading: boolean;
+  isLiveApi: boolean;
 
   loadTables: () => Promise<void>;
   setSectionFilter: (sec: string) => void;
@@ -150,6 +61,8 @@ export const useFloorStore = create<FloorState>((set, get) => ({
   tables: INITIAL_FLOOR_TABLES,
   sectionFilter: 'all',
   statusFilter: 'all',
+  isLoading: false,
+  isLiveApi: false,
 
   setSectionFilter: (sectionFilter) => {
     playTouchFeedback();
@@ -162,14 +75,84 @@ export const useFloorStore = create<FloorState>((set, get) => ({
   },
 
   loadTables: async () => {
+    set({ isLoading: true });
+    try {
+      // 1. Fetch live tables from backend
+      const tablesRes = await apiClient.get('/restaurant/tables');
+      if (tablesRes.data?.success && Array.isArray(tablesRes.data.data) && tablesRes.data.data.length > 0) {
+        const rawTables = tablesRes.data.data;
+
+        // 2. Fetch live active sessions to see which tables are occupied or billed
+        let activeSessions: any[] = [];
+        try {
+          const sessionsRes = await apiClient.get('/orders/sessions?status=active');
+          if (sessionsRes.data?.success && Array.isArray(sessionsRes.data.data)) {
+            activeSessions = sessionsRes.data.data;
+          }
+        } catch {}
+
+        const liveFloorTables: FloorTable[] = rawTables.map((t: any) => {
+          const matchedSession = activeSessions.find(
+            (s: any) => String(s.tableId?._id || s.tableId?.id || s.tableId) === String(t._id)
+          );
+
+          if (matchedSession) {
+            const sessionItems: TableItem[] = (matchedSession.orderIds || []).flatMap((ord: any) =>
+              (ord.items || []).map((it: any) => ({
+                id: it._id || String(Math.random()),
+                name: it.name,
+                price: it.price || 0,
+                quantity: it.quantity || 1,
+                notes: it.notes,
+              }))
+            );
+
+            return {
+              id: t._id,
+              number: t.tableNo || t.tableId || `T-${t.number || '01'}`,
+              section: t.section || 'Main Hall',
+              capacity: Number(t.capacity) || 4,
+              status: matchedSession.paymentStatus === 'requested' ? 'billed' : 'occupied',
+              guests: matchedSession.guests || t.capacity || 2,
+              serverName: matchedSession.customerName || 'Captain',
+              seatedAt: matchedSession.startedAt ? new Date(matchedSession.startedAt).getTime() : Date.now(),
+              items: sessionItems,
+              subtotal: matchedSession.total || matchedSession.subtotal || 0,
+              sessionId: matchedSession._id,
+            };
+          }
+
+          return {
+            id: t._id,
+            number: t.tableNo || t.tableId || `T-${t.number || '01'}`,
+            section: t.section || 'Main Hall',
+            capacity: Number(t.capacity) || 4,
+            status: 'available',
+            items: [],
+            subtotal: 0,
+          };
+        });
+
+        set({ tables: liveFloorTables, isLiveApi: true, isLoading: false });
+        try {
+          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(liveFloorTables));
+        } catch {}
+        return;
+      }
+    } catch (e) {
+      // Backend offline or local fallback
+    }
+
+    // Fallback to locally cached storage
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
-        set({ tables: JSON.parse(stored) });
+        set({ tables: JSON.parse(stored), isLiveApi: false, isLoading: false });
+        return;
       }
-    } catch (e) {
-      console.warn('Failed loading floor tables:', e);
-    }
+    } catch {}
+
+    set({ isLoading: false });
   },
 
   seatGuests: async (tableId, pax, serverName = 'Floor Staff') => {
@@ -218,48 +201,43 @@ export const useFloorStore = create<FloorState>((set, get) => ({
     });
 
     set({ tables: updated });
+
+    // Also sync to real backend orders if connected
+    try {
+      await apiClient.post('/orders/manual', {
+        tableId,
+        items: newItems,
+        total: addedTotal,
+      });
+    } catch {}
+
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     } catch {}
-
-    // Also automatically dispatch a live KOT ticket to kitchen ordersStore!
-    const ordersStore = useOrdersStore.getState();
-    const newKOT = {
-      id: `kot-${Date.now()}`,
-      kotNo: `#KOT-${Math.floor(110 + Math.random() * 50)}`,
-      tableNo: table.number,
-      serverName: table.serverName || 'Waiter Station',
-      orderType: 'Dine-In' as const,
-      status: 'pending' as const,
-      createdAt: Date.now(),
-      totalAmount: addedTotal,
-      items: newItems.map((i, idx) => ({
-        id: `kot-item-${Date.now()}-${idx}`,
-        name: i.name,
-        quantity: i.quantity,
-        category: i.category || 'Main Course',
-        notes: i.notes,
-      })),
-    };
-
-    useOrdersStore.setState({ orders: [newKOT, ...ordersStore.orders] });
   },
 
   requestBill: async (tableId) => {
     playTouchFeedback();
-    const updated = get().tables.map((t) => {
-      if (t.id !== tableId) return t;
-      return { ...t, status: 'billed' as const };
-    });
-
+    const table = get().tables.find((t) => t.id === tableId);
+    const updated = get().tables.map((t) =>
+      t.id === tableId ? { ...t, status: 'billed' as const } : t
+    );
     set({ tables: updated });
+
+    if (table?.sessionId) {
+      try {
+        await apiClient.post(`/orders/sessions/${table.sessionId}/bill`);
+      } catch {}
+    }
+
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     } catch {}
   },
 
   settleAndClearTable: async (tableId) => {
-    playTouchFeedback();
+    playOrderReadyFeedback();
+    const table = get().tables.find((t) => t.id === tableId);
     const updated = get().tables.map((t) => {
       if (t.id !== tableId) return t;
       return {
@@ -270,10 +248,18 @@ export const useFloorStore = create<FloorState>((set, get) => ({
         seatedAt: undefined,
         items: [],
         subtotal: 0,
+        sessionId: undefined,
       };
     });
 
     set({ tables: updated });
+
+    if (table?.sessionId) {
+      try {
+        await apiClient.post(`/orders/sessions/${table.sessionId}/end`);
+      } catch {}
+    }
+
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     } catch {}

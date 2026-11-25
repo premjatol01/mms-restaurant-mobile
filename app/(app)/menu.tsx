@@ -11,9 +11,9 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
-import { Colors } from '../../../src/constants/theme';
-import { fetchMenuItemsApi, updateItemAvailabilityApi, ApiMenuItem } from '../../../src/services/api/menuApi';
-import { useMenuStockStore } from '../../../src/store/menuStockStore';
+import { Colors } from '../../src/constants/theme';
+import { fetchMenuItemsApi, updateItemAvailabilityApi, ApiMenuItem } from '../../src/services/api/menuApi';
+import { useMenuStockStore } from '../../src/store/menuStockStore';
 import { Search, PackageX, CheckCircle, Utensils, X } from 'lucide-react-native';
 
 export default function MenuStockScreen() {

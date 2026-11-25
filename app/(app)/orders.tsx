@@ -11,10 +11,10 @@ import {
   Switch,
   Alert,
 } from 'react-native';
-import { useOrdersStore, KOTTicket } from '../../../src/store/ordersStore';
-import { useMenuStockStore } from '../../../src/store/menuStockStore';
-import { usePermissions } from '../../../src/hooks/usePermissions';
-import { Colors } from '../../../src/constants/theme';
+import { useOrdersStore, KOTTicket } from '../../src/store/ordersStore';
+import { useMenuStockStore } from '../../src/store/menuStockStore';
+import { usePermissions } from '../../src/hooks/usePermissions';
+import { Colors } from '../../src/constants/theme';
 import {
   Clock,
   Flame,
@@ -39,6 +39,7 @@ export default function OrdersScreen() {
     toggleKitchenDisplayMode,
     advanceStatus,
     simulateIncomingOrder,
+    loadOrders,
   } = useOrdersStore();
 
   const { items: stockItems, toggleAvailability, searchQuery, setSearchQuery } = useMenuStockStore();
@@ -48,7 +49,18 @@ export default function OrdersScreen() {
   const canToggleStock = hasPermission('menu_availability');
 
   const [stockModalVisible, setStockModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [, setTick] = useState(0);
+
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadOrders();
+    setRefreshing(false);
+  };
 
   // Force re-render every 30s to keep elapsed time badges live
   useEffect(() => {
@@ -200,6 +212,8 @@ export default function OrdersScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <ChefHat size={48} color={Colors.textMuted} />

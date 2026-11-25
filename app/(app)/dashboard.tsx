@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
-import { Colors } from '../../../src/constants/theme';
-import { fetchDashboardAnalytics, DashboardMetrics } from '../../../src/services/api/dashboardApi';
+import { Colors } from '../../src/constants/theme';
+import { fetchDashboardAnalytics, DashboardMetrics } from '../../src/services/api/dashboardApi';
 import { TrendingUp, ShoppingBag, Users, Clock, Store, RefreshCw, Star } from 'lucide-react-native';
 
 const FALLBACK_KPI: DashboardMetrics = {

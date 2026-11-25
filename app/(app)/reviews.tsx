@@ -8,8 +8,8 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
-import { Colors } from '../../../src/constants/theme';
-import { fetchAdminReviewsApi, moderateReviewApi, ApiCustomerReview } from '../../../src/services/api/reviewsApi';
+import { Colors } from '../../src/constants/theme';
+import { fetchAdminReviewsApi, moderateReviewApi, ApiCustomerReview } from '../../src/services/api/reviewsApi';
 import { Star, CheckCircle, ThumbsUp, MessageSquare, ShieldCheck, Filter } from 'lucide-react-native';
 
 const FALLBACK_REVIEWS: ApiCustomerReview[] = [
