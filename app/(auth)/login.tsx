@@ -13,7 +13,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/store/authStore';
 import { Colors } from '../../src/constants/theme';
-import { UtensilsCrossed, Lock, Mail, ShieldAlert, LogIn } from 'lucide-react-native';
+import { UtensilsCrossed, Lock, Mail, ShieldAlert, LogIn, Eye, EyeOff } from 'lucide-react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -21,6 +21,7 @@ export default function LoginScreen() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
     if (!email.trim() || !password) return;
@@ -94,9 +95,21 @@ export default function LoginScreen() {
                 placeholderTextColor={Colors.textMuted}
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry
+                secureTextEntry={!showPassword}
                 autoCapitalize="none"
               />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.eyeBtn}
+                activeOpacity={0.7}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                {showPassword ? (
+                  <EyeOff size={18} color={Colors.textSecondary} />
+                ) : (
+                  <Eye size={18} color={Colors.textSecondary} />
+                )}
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -236,6 +249,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Colors.text,
     height: '100%',
+  },
+  eyeBtn: {
+    padding: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loginBtn: {
     backgroundColor: Colors.primary,
