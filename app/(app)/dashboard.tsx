@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Colors } from '../../src/constants/theme';
 import { fetchDashboardAnalytics, DashboardMetrics } from '../../src/services/api/dashboardApi';
 import { useAuthStore } from '../../src/store/authStore';
-import { TrendingUp, ShoppingBag, Users, Clock, Store, RefreshCw, Star } from 'lucide-react-native';
+import { usePermissions } from '../../src/hooks/usePermissions';
+import { TrendingUp, ShoppingBag, Users, Clock, Store, RefreshCw, Star, ShieldAlert } from 'lucide-react-native';
 
 const INITIAL_ZERO_KPI: DashboardMetrics = {
   todayRevenue: 0,
@@ -23,6 +25,9 @@ const INITIAL_ZERO_KPI: DashboardMetrics = {
 
 export default function DashboardScreen() {
   const { user } = useAuthStore();
+  const { isAdmin, hasPermission, roleName } = usePermissions();
+  const router = useRouter();
+
   const [kpi, setKpi] = useState<DashboardMetrics>(INITIAL_ZERO_KPI);
   const [topDishes, setTopDishes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -30,6 +35,7 @@ export default function DashboardScreen() {
   const [isApiLive, setIsApiLive] = useState(false);
 
   const loadData = async () => {
+    if (!isAdmin && !hasPermission('biz_growth')) return;
     try {
       setLoading(true);
       const data = await fetchDashboardAnalytics();
@@ -50,13 +56,43 @@ export default function DashboardScreen() {
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (isAdmin || hasPermission('biz_growth')) {
+      loadData();
+    }
+  }, [isAdmin]);
 
   const onRefresh = () => {
     setRefreshing(true);
     loadData();
   };
+
+  // Guard non-admin / non-biz_growth staff members
+  if (!isAdmin && !hasPermission('biz_growth')) {
+    return (
+      <View style={styles.restrictedContainer}>
+        <View style={styles.restrictedCard}>
+          <ShieldAlert size={48} color={Colors.amber} />
+          <Text style={styles.restrictedTitle}>Station Access Restricted</Text>
+          <Text style={styles.restrictedSubtitle}>
+            Sales & Revenue Analytics are reserved for the Restaurant Admin. Your active role is{' '}
+            <Text style={{ fontWeight: '700', color: Colors.text }}>{roleName || 'Staff Member'}</Text>.
+          </Text>
+          <TouchableOpacity
+            style={styles.goToStationBtn}
+            onPress={() => {
+              if (hasPermission('tables_view')) router.replace('/tables');
+              else if (hasPermission('orders_view')) router.replace('/orders');
+              else if (hasPermission('billing_settle')) router.replace('/billing');
+              else router.replace('/profile');
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.goToStationText}>Proceed to My Assigned Station</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   // Calculate growth vs yesterday
   const revGrowth = kpi.yesterdayRevenue > 0
@@ -389,5 +425,50 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: Colors.text,
+  },
+  restrictedContainer: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  restrictedCard: {
+    backgroundColor: Colors.card,
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    width: '100%',
+    maxWidth: 400,
+  },
+  restrictedTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: Colors.text,
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  restrictedSubtitle: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  goToStationBtn: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 10,
+    width: '100%',
+    alignItems: 'center',
+  },
+  goToStationText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

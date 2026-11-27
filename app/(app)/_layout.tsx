@@ -21,7 +21,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
 export default function AppLayout() {
   const { isAuthenticated } = useAuthStore();
-  const { roleName, role, isKitchen, isWaiter, isCashier } = usePermissions();
+  const { roleName, role, isAdmin, isKitchen, isWaiter, isCashier, hasPermission } = usePermissions();
   const { openSidebar } = useSidebarStore();
 
   if (!isAuthenticated) {
@@ -32,12 +32,12 @@ export default function AppLayout() {
    * Bottom bar displays ONLY the 3 to 4 essential operational icons
    * according to role. All other modules are accessible via the Hamburger Drawer!
    */
-  const showBottomDashboard = !isKitchen && !isWaiter && !isCashier; // Only Admin / Manager
-  const showBottomTables = !isKitchen; // Admin, Manager, Waiter, Cashier
-  const showBottomOrders = true; // All roles need orders / KDS
-  const showBottomBilling = !isKitchen && !isWaiter; // Admin, Cashier, Manager
-  const showBottomCalls = isWaiter; // Waiters have service calls on bottom bar
-  const showBottomProfile = isKitchen || isWaiter || isCashier; // Non-admins have profile on bottom bar
+  const showBottomDashboard = isAdmin; // Only Root Admin gets Sales Insights on bottom bar
+  const showBottomTables = isAdmin || (hasPermission('tables_view') && !isKitchen);
+  const showBottomOrders = isAdmin || hasPermission('orders_view');
+  const showBottomBilling = isAdmin || (hasPermission('billing_settle') && !isWaiter && !isKitchen);
+  const showBottomCalls = isWaiter || (hasPermission('waiter_handler') && !isAdmin && !hasPermission('billing_settle'));
+  const showBottomProfile = !isAdmin; // Sub-admin / staff members have station profile on bottom bar
 
   return (
     <>
@@ -71,7 +71,7 @@ export default function AppLayout() {
           // Role Badge on Top Right
           headerRight: () => (
             <View style={styles.roleHeaderBadge}>
-              <Text style={styles.roleHeaderText}>{roleName || role?.toUpperCase()}</Text>
+              <Text style={styles.roleHeaderText}>{roleName || (isAdmin ? 'Admin' : 'Staff')}</Text>
             </View>
           ),
           tabBarActiveTintColor: Colors.primary,

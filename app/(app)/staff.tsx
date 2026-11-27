@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useStaffStore, MobileStaffMember } from '../../src/store/staffStore';
+import { usePermissions } from '../../src/hooks/usePermissions';
 import { Colors } from '../../src/constants/theme';
 import { PRESET_ROLES, PERMISSION_GROUPS, PresetRole } from '../../src/constants/roles';
 import {
@@ -27,6 +28,7 @@ import {
 
 export default function StaffScreen() {
   const router = useRouter();
+  const { isAdmin, hasPermission } = usePermissions();
   const {
     staffMembers,
     loadStaff,
@@ -51,8 +53,31 @@ export default function StaffScreen() {
   );
 
   useEffect(() => {
-    loadStaff();
-  }, []);
+    if (isAdmin || hasPermission('staff_manage')) {
+      loadStaff();
+    }
+  }, [isAdmin]);
+
+  if (!isAdmin && !hasPermission('staff_manage')) {
+    return (
+      <View style={styles.restrictedContainer}>
+        <View style={styles.restrictedCard}>
+          <Shield size={48} color={Colors.rose} />
+          <Text style={styles.restrictedTitle}>Access Restricted</Text>
+          <Text style={styles.restrictedSubtitle}>
+            Managing staff accounts and assigning role permissions requires Staff Management authority.
+          </Text>
+          <TouchableOpacity
+            style={styles.goToStationBtn}
+            onPress={() => router.back()}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.goToStationText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   const handleRoleSelect = (role: PresetRole) => {
     setSelectedRoleId(role.id);
@@ -889,5 +914,50 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.textSecondary,
     marginTop: 4,
+  },
+  restrictedContainer: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  restrictedCard: {
+    backgroundColor: Colors.card,
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    width: '100%',
+    maxWidth: 400,
+  },
+  restrictedTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: Colors.text,
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  restrictedSubtitle: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  goToStationBtn: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 10,
+    width: '100%',
+    alignItems: 'center',
+  },
+  goToStationText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
