@@ -6,13 +6,22 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../src/store/authStore';
 import { OfflineBanner } from '../src/components/feedback/OfflineBanner';
 import { Colors } from '../src/constants/theme';
+import { registerForPushNotificationsAsync, setupPushNotificationListeners } from '../src/services/notifications/pushNotificationService';
 
 export default function RootLayout() {
-  const { restoreSession, isLoading } = useAuthStore();
+  const { restoreSession, isLoading, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     restoreSession();
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      registerForPushNotificationsAsync().catch(() => {});
+      const cleanup = setupPushNotificationListeners();
+      return () => cleanup();
+    }
+  }, [isAuthenticated]);
 
   if (isLoading) {
     return (

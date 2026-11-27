@@ -123,6 +123,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         await AsyncStorage.setItem(STORAGE_USER_KEY, JSON.stringify(user));
 
         set({ user, token, isAuthenticated: true, isLoading: false, error: null });
+
+        // Register mobile device for lock-screen push notifications
+        import('../services/notifications/pushNotificationService')
+          .then((mod) => mod.registerForPushNotificationsAsync())
+          .catch(() => {});
+
         return true;
       }
 
