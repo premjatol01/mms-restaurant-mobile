@@ -1,9 +1,11 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { playUrgentNewOrderFeedback, playTouchFeedback } from '../services/audio/soundService';
+import { apiClient } from '../services/api/client';
 
 export interface ServiceCall {
   id: string;
+  tableId?: string;
   tableNo: string;
   type: 'water' | 'bill' | 'steward';
   label: string;
@@ -21,7 +23,7 @@ interface WaiterCallsState {
 
   loadCalls: () => Promise<void>;
   setFilterType: (filter: 'all' | 'water' | 'bill' | 'steward') => void;
-  dismissCall: (id: string) => Promise<void>;
+  dismissCall: (id: string, staffName?: string) => Promise<void>;
 }
 
 export const useWaiterCallsStore = create<WaiterCallsState>((set, get) => ({
@@ -44,12 +46,26 @@ export const useWaiterCallsStore = create<WaiterCallsState>((set, get) => ({
     }
   },
 
-  dismissCall: async (id: string) => {
+  dismissCall: async (id: string, staffName?: string) => {
     playTouchFeedback();
+    const targetCall = get().calls.find((c) => c.id === id);
     const updated = get().calls.filter((c) => c.id !== id);
     set({ calls: updated });
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     } catch {}
+
+    // Notify backend and customer table room
+    if (targetCall?.tableId) {
+      try {
+        await apiClient.post('/orders/waiter/acknowledge', {
+          tableId: targetCall.tableId,
+          staffName: staffName || undefined,
+        });
+      } catch (err) {
+        // Non-blocking log
+        console.warn('Could not post waiter acknowledgment:', err);
+      }
+    }
   },
 }));
